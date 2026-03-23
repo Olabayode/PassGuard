@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="PASSGUARD.BLL/PASSGUARD.BLL.csproj" />
+  <Project Path="PASSGUARD.DAL/PASSGUARD.DAL.csproj" />
+  <Project Path="PASSGUARD.Models/PASSGUARD.Models.csproj" />
+  <Project Path="PASSGUARD/PASSGUARD.csproj" />
+</Solution>
