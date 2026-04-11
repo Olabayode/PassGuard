@@ -7,20 +7,31 @@ namespace PassGuard.BLL
     public class VisitPassService
     {
         private readonly VisitPassRepository _repo;
+        private readonly PassCodeService _passCodeService;
 
-        public VisitPassService(VisitPassRepository repo)
+        public VisitPassService(VisitPassRepository repo, PassCodeService passCodeService)
         {
             _repo = repo;
+            _passCodeService = passCodeService;
         }
 
         public List<VisitPass> GetAllWithDetails()
         {
-            return _repo.GetAllWithDetails();
+            List<VisitPass> visitPasses = _repo.GetAllWithDetails();
+            NormalizeStatuses(visitPasses);
+            return visitPasses;
         }
 
         public VisitPass? GetFullDetails(int id)
         {
-            return _repo.GetFullDetails(id);
+            VisitPass? visitPass = _repo.GetFullDetails(id);
+
+            if (visitPass != null)
+            {
+                NormalizeStatus(visitPass);
+            }
+
+            return visitPass;
         }
 
         public VisitPass? GetById(int id)
@@ -35,7 +46,9 @@ namespace PassGuard.BLL
 
         public List<VisitPass> GetByCreatedByUserId(string createdByUserId)
         {
-            return _repo.GetByCreatedByUserId(createdByUserId);
+            List<VisitPass> visitPasses = _repo.GetByCreatedByUserId(createdByUserId);
+            NormalizeStatuses(visitPasses);
+            return visitPasses;
         }
 
         public void Add(VisitPass visitPass)
@@ -51,6 +64,42 @@ namespace PassGuard.BLL
         public void Delete(int id)
         {
             _repo.Delete(id);
+        }
+
+        public string GeneratePlainCode()
+        {
+            return _passCodeService.GeneratePlainCode();
+        }
+
+        public string HashCode(string plainCode)
+        {
+            return _passCodeService.HashCode(plainCode);
+        }
+
+        public bool VerifyCode(VisitPass visitPass, string plainCode)
+        {
+            return _passCodeService.VerifyCode(plainCode, visitPass.CodeHash);
+        }
+
+        public string NormalizeStatus(VisitPass visitPass)
+        {
+            string calculatedStatus = _passCodeService.CalculateStatus(visitPass);
+
+            if (!string.Equals(visitPass.Status, calculatedStatus, StringComparison.Ordinal))
+            {
+                visitPass.Status = calculatedStatus;
+                _repo.Update(visitPass);
+            }
+
+            return visitPass.Status;
+        }
+
+        private void NormalizeStatuses(IEnumerable<VisitPass> visitPasses)
+        {
+            foreach (VisitPass visitPass in visitPasses)
+            {
+                NormalizeStatus(visitPass);
+            }
         }
     }
 }

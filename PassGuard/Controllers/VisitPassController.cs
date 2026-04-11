@@ -137,11 +137,12 @@ namespace PassGuard.Controllers
 
             DateTime now = DateTime.Now;
             DateTime expire = now.AddDays(1);
+            string plainCode = _visitPassService.GeneratePlainCode();
 
             VisitPass visitPass = new VisitPass
             {
                 VisitorId = visitor.VisitorId,
-                CodeHash = Guid.NewGuid().ToString("N"),
+                CodeHash = _visitPassService.HashCode(plainCode),
                 CreatedByUserId = CurrentUserId,
                 HomeId = home.HomeId,
                 CreatedAt = now,
@@ -151,7 +152,10 @@ namespace PassGuard.Controllers
 
             _visitPassService.Add(visitPass);
 
-            return RedirectToAction("Index");
+            TempData["NewPassCode"] = plainCode;
+            TempData["SuccessMessage"] = "Visit pass created successfully. Save the code now because it will not be shown again.";
+
+            return RedirectToAction("Details", new { id = visitPass.VisitPassId });
         }
 
         [Authorize(Roles = "Admin,HomeOwner")]
@@ -280,10 +284,11 @@ namespace PassGuard.Controllers
 
             visitPass.CodeHash = model.CodeHash;
             visitPass.CreatedByUserId = string.IsNullOrWhiteSpace(CurrentUserId) ? model.CreatedByUserId : CurrentUserId;
-            visitPass.Status = model.Status;
+            visitPass.Status = model.Status == "Revoked" ? "Revoked" : visitPass.Status;
             visitPass.CreatedAt = model.CreatedAt;
             visitPass.ExpiresAt = model.ExpiresAt;
             _visitPassService.Update(visitPass);
+            _visitPassService.NormalizeStatus(visitPass);
 
             GateCheckIn? gateCheckIn;
 
@@ -335,6 +340,91 @@ namespace PassGuard.Controllers
             }
 
             return View(visitPass);
+        }
+
+        [Authorize(Roles = "Admin,Security")]
+        public IActionResult Verify()
+        {
+            return View(new VerifyPassViewModel());
+        }
+
+        [HttpPost]
+        [Authorize(Roles = "Admin,Security")]
+        [ValidateAntiForgeryToken]
+        public IActionResult Verify(VerifyPassViewModel model)
+        {
+            if (string.IsNullOrWhiteSpace(model.EnteredCode))
+            {
+                model.Message = "Enter a pass code to verify.";
+                return View(model);
+            }
+
+            string enteredCode = model.EnteredCode.Trim().ToUpperInvariant();
+            List<VisitPass> visitPasses = _visitPassService.GetAllWithDetails();
+            VisitPass? matchedPass = visitPasses.FirstOrDefault(v => _visitPassService.VerifyCode(v, enteredCode));
+
+            if (matchedPass == null)
+            {
+                model.Message = "Invalid pass code. No matching visit pass was found.";
+                model.IsMatch = false;
+                return View(model);
+            }
+
+            string currentStatus = _visitPassService.NormalizeStatus(matchedPass);
+
+            if (currentStatus == "Active")
+            {
+                GateCheckIn? gateCheckIn = matchedPass.GateCheckIn;
+
+                if (gateCheckIn == null)
+                {
+                    gateCheckIn = new GateCheckIn
+                    {
+                        VisitPassId = matchedPass.VisitPassId,
+                        Result = "Approved",
+                        CheckInTime = DateTime.Now,
+                        Note = "Approved by pass-code verification.",
+                        SecurityUserId = CurrentUserId
+                    };
+                    _gateCheckInService.Add(gateCheckIn);
+                }
+                else
+                {
+                    gateCheckIn.Result = "Approved";
+                    gateCheckIn.CheckInTime = DateTime.Now;
+                    gateCheckIn.Note = "Approved by pass-code verification.";
+                    gateCheckIn.SecurityUserId = CurrentUserId;
+                    _gateCheckInService.Update(gateCheckIn);
+                }
+
+                matchedPass.GateCheckIn = gateCheckIn;
+                matchedPass.Status = "Used";
+                _visitPassService.Update(matchedPass);
+
+                model.Message = "Pass verified successfully. Visitor may enter.";
+                model.IsMatch = true;
+                model.VisitPass = _visitPassService.GetFullDetails(matchedPass.VisitPassId);
+                return View(model);
+            }
+
+            if (matchedPass.GateCheckIn == null)
+            {
+                GateCheckIn deniedCheckIn = new GateCheckIn
+                {
+                    VisitPassId = matchedPass.VisitPassId,
+                    Result = "Denied",
+                    CheckInTime = DateTime.Now,
+                    Note = $"Verification denied because pass status is {currentStatus}.",
+                    SecurityUserId = CurrentUserId
+                };
+                _gateCheckInService.Add(deniedCheckIn);
+                matchedPass.GateCheckIn = deniedCheckIn;
+            }
+
+            model.Message = $"Pass found, but it is {currentStatus} and cannot be used.";
+            model.IsMatch = false;
+            model.VisitPass = _visitPassService.GetFullDetails(matchedPass.VisitPassId);
+            return View(model);
         }
 
         [Authorize(Roles = "Admin,HomeOwner")]

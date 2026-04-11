@@ -12,7 +12,15 @@
 }
 
 <p>
-    <a asp-action="Create" class="btn btn-primary">Add</a>
+    @if (User.IsInRole("Admin") || User.IsInRole("HomeOwner"))
+    {
+        <a asp-action="Create" class="btn btn-primary">Add</a>
+    }
+
+    @if (User.IsInRole("Admin") || User.IsInRole("Security"))
+    {
+        <a asp-action="Verify" class="btn btn-outline-success ms-2">Verify Pass</a>
+    }
 </p>
 
 <table class="table table-bordered">
@@ -40,9 +48,12 @@
                 <td>@item.Status</td>
                 <td>@(item.GateCheckIn == null ? "No" : item.GateCheckIn.Result)</td>
                 <td>
-                    <a asp-action="Edit" asp-route-id="@item.VisitPassId">Edit</a> |
-                    <a asp-action="Details" asp-route-id="@item.VisitPassId">Details</a> |
-                    <a asp-action="Delete" asp-route-id="@item.VisitPassId">Delete</a>
+                    <a asp-action="Details" asp-route-id="@item.VisitPassId">Details</a>
+                    @if (User.IsInRole("Admin") || User.IsInRole("HomeOwner"))
+                    {
+                        <text> | </text><a asp-action="Edit" asp-route-id="@item.VisitPassId">Edit</a>
+                        <text> | </text><a asp-action="Delete" asp-route-id="@item.VisitPassId">Delete</a>
+                    }
                 </td>
             </tr>
         }

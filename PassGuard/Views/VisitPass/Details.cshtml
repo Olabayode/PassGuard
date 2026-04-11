@@ -6,6 +6,19 @@
 
 <h2>Access Details</h2>
 
+@if (TempData["SuccessMessage"] is string successMessage)
+{
+    <div class="alert alert-success">@successMessage</div>
+}
+
+@if (TempData["NewPassCode"] is string newPassCode)
+{
+    <div class="alert alert-warning">
+        <strong>Pass Code:</strong> <code>@newPassCode</code><br />
+        Keep this code now. It is only shown once.
+    </div>
+}
+
 <p><strong>Visitor Name:</strong> @Model.Visitor.FullName</p>
 <p><strong>Visitor Phone:</strong> @Model.Visitor.Phone</p>
 <p><strong>Estate Name:</strong> @Model.Home.Estate.EstateName</p>
@@ -18,6 +31,13 @@
 <p><strong>Status:</strong> @Model.Status</p>
 <p><strong>Created At:</strong> @Model.CreatedAt</p>
 <p><strong>Expires At:</strong> @Model.ExpiresAt</p>
+
+@if (User.IsInRole("Admin") || User.IsInRole("Security"))
+{
+    <p>
+        <a asp-action="Verify" class="btn btn-outline-success btn-sm">Open Verification Screen</a>
+    </p>
+}
 
 <hr />
 
@@ -39,4 +59,11 @@
 else
 {
     <p>No check-in records found.</p>
+
+    @if (User.IsInRole("Admin") || User.IsInRole("Security"))
+    {
+        <p>
+            <a asp-controller="GateCheckIn" asp-action="Create" asp-route-visitPassId="@Model.VisitPassId">Record Check-In</a>
+        </p>
+    }
 }

@@ -42,6 +42,7 @@ namespace PassGuard
             builder.Services.AddScoped<HomeService>();
             builder.Services.AddScoped<VisitorService>();
             builder.Services.AddScoped<VisitPassService>();
+            builder.Services.AddScoped<PassCodeService>();
             builder.Services.AddScoped<GateCheckInService>();
 
 

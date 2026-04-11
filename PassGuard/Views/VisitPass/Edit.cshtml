@@ -46,7 +46,6 @@
         <label asp-for="Status" class="form-label">Status</label>
         <select asp-for="Status" class="form-control">
             <option value="Active">Active</option>
-            <option value="Expired">Expired</option>
             <option value="Revoked">Revoked</option>
         </select>
     </div>
@@ -59,11 +58,6 @@
     <div class="mb-3">
         <label asp-for="ExpiresAt" class="form-label">Expires At</label>
         <input asp-for="ExpiresAt" type="datetime-local" class="form-control" />
-    </div>
-
-    <div class="mb-3">
-        <label asp-for="SecurityUserId" class="form-label">Security User Id</label>
-        <input asp-for="SecurityUserId" class="form-control" />
     </div>
 
     <hr />

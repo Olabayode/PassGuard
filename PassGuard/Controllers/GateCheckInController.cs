@@ -10,10 +10,12 @@ namespace PassGuard.Controllers
     public class GateCheckInController : Controller
     {
         private readonly GateCheckInService _gateCheckInService;
+        private readonly VisitPassService _visitPassService;
 
-        public GateCheckInController(GateCheckInService gateCheckInService)
+        public GateCheckInController(GateCheckInService gateCheckInService, VisitPassService visitPassService)
         {
             _gateCheckInService = gateCheckInService;
+            _visitPassService = visitPassService;
         }
 
         public IActionResult Create(int visitPassId)
@@ -37,6 +39,7 @@ namespace PassGuard.Controllers
             };
 
             _gateCheckInService.Add(gateCheckIn);
+            UpdatePassStatus(visitPassId);
 
             return RedirectToAction("Details", "VisitPass", new { id = visitPassId });
         }
@@ -64,6 +67,7 @@ namespace PassGuard.Controllers
             }
 
             _gateCheckInService.Update(model);
+            UpdatePassStatus(model.VisitPassId);
             return RedirectToAction("Details", "VisitPass", new { id = model.VisitPassId });
         }
 
@@ -78,8 +82,19 @@ namespace PassGuard.Controllers
 
             int visitPassId = gateCheckIn.VisitPassId;
             _gateCheckInService.Delete(id);
+            UpdatePassStatus(visitPassId);
 
             return RedirectToAction("Details", "VisitPass", new { id = visitPassId });
+        }
+
+        private void UpdatePassStatus(int visitPassId)
+        {
+            VisitPass? visitPass = _visitPassService.GetFullDetails(visitPassId);
+
+            if (visitPass != null)
+            {
+                _visitPassService.NormalizeStatus(visitPass);
+            }
         }
     }
 }

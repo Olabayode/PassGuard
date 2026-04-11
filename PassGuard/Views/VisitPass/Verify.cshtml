@@ -1,0 +1,46 @@
+@model PassGuard.Models.ViewModels.VerifyPassViewModel
+
+@{
+    ViewData["Title"] = "Verify Pass";
+}
+
+<h2>Verify Visit Pass</h2>
+
+<form asp-action="Verify" method="post" class="mb-4">
+    <div class="mb-3">
+        <label asp-for="EnteredCode" class="form-label">Pass Code</label>
+        <input asp-for="EnteredCode" class="form-control" autocomplete="off" />
+    </div>
+
+    <button type="submit" class="btn btn-primary">Verify Code</button>
+</form>
+
+@if (!string.IsNullOrWhiteSpace(Model.Message))
+{
+    <div class="alert @(Model.IsMatch ? "alert-success" : "alert-warning")">
+        @Model.Message
+    </div>
+}
+
+@if (Model.VisitPass != null)
+{
+    <div class="card">
+        <div class="card-body">
+            <h4 class="card-title">Matched Pass</h4>
+            <p><strong>Visitor:</strong> @Model.VisitPass.Visitor.FullName</p>
+            <p><strong>Phone:</strong> @Model.VisitPass.Visitor.Phone</p>
+            <p><strong>Estate:</strong> @Model.VisitPass.Home.Estate.EstateName</p>
+            <p><strong>Home:</strong> @Model.VisitPass.Home.Address</p>
+            <p><strong>Status:</strong> @Model.VisitPass.Status</p>
+            <p><strong>Expires At:</strong> @Model.VisitPass.ExpiresAt</p>
+
+            @if (Model.VisitPass.GateCheckIn != null)
+            {
+                <hr />
+                <p><strong>Check-In Result:</strong> @Model.VisitPass.GateCheckIn.Result</p>
+                <p><strong>Checked In At:</strong> @Model.VisitPass.GateCheckIn.CheckInTime</p>
+                <p><strong>Note:</strong> @Model.VisitPass.GateCheckIn.Note</p>
+            }
+        </div>
+    </div>
+}
