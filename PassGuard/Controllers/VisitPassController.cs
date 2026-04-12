@@ -1,6 +1,7 @@
 ﻿using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using PassGuard.BLL;
 using PassGuard.Models;
 using PassGuard.Models.ViewModels;
@@ -32,6 +33,18 @@ namespace PassGuard.Controllers
 
         private string CurrentUserId => User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "";
 
+        private void PopulateVisitors(int? selectedVisitorId = null)
+        {
+            ViewBag.Visitors = _visitorService.GetAll()
+                .Select(v => new SelectListItem
+                {
+                    Value = v.VisitorId.ToString(),
+                    Text = $"{v.FullName} ({v.Phone})",
+                    Selected = v.VisitorId == selectedVisitorId
+                })
+                .ToList();
+        }
+
         public IActionResult Index()
         {
             List<VisitPass> visitPasses = User.IsInRole("HomeOwner")
@@ -54,6 +67,7 @@ namespace PassGuard.Controllers
                     return RedirectToAction(nameof(Index));
                 }
 
+                PopulateVisitors();
                 return View(new AccessViewModel
                 {
                     EstateName = home.Estate.EstateName,
@@ -62,6 +76,7 @@ namespace PassGuard.Controllers
                 });
             }
 
+            PopulateVisitors();
             return View(new AccessViewModel());
         }
 
@@ -71,6 +86,7 @@ namespace PassGuard.Controllers
         {
             if (!ModelState.IsValid)
             {
+                PopulateVisitors(model.VisitorId);
                 return View(model);
             }
 
@@ -123,16 +139,13 @@ namespace PassGuard.Controllers
                 }
             }
 
-            Visitor? visitor = _visitorService.GetByFullNameAndPhone(model.VisitorFullName, model.VisitorPhone);
+            Visitor? visitor = _visitorService.GetById(model.VisitorId);
 
             if (visitor == null)
             {
-                visitor = new Visitor
-                {
-                    FullName = model.VisitorFullName,
-                    Phone = model.VisitorPhone
-                };
-                _visitorService.Add(visitor);
+                ModelState.AddModelError(nameof(model.VisitorId), "Select a valid visitor.");
+                PopulateVisitors();
+                return View(model);
             }
 
             DateTime now = DateTime.Now;
@@ -185,8 +198,7 @@ namespace PassGuard.Controllers
                 OwnerUserId = visitPass.Home.OwnerUserId,
                 Address = visitPass.Home.Address,
 
-                VisitorFullName = visitPass.Visitor.FullName,
-                VisitorPhone = visitPass.Visitor.Phone,
+                VisitorId = visitPass.VisitorId,
 
                 CodeHash = visitPass.CodeHash,
                 CreatedByUserId = visitPass.CreatedByUserId,
@@ -200,6 +212,7 @@ namespace PassGuard.Controllers
                 CheckInNote = latestCheckIn?.Note ?? ""
             };
 
+            PopulateVisitors(model.VisitorId);
             return View(model);
         }
 
@@ -209,6 +222,7 @@ namespace PassGuard.Controllers
         {
             if (!ModelState.IsValid)
             {
+                PopulateVisitors(model.VisitorId);
                 return View(model);
             }
 
@@ -263,25 +277,16 @@ namespace PassGuard.Controllers
                 _homeService.Update(home);
             }
 
-            Visitor? visitor = _visitorService.GetById(visitPass.VisitorId);
+            Visitor? visitor = _visitorService.GetById(model.VisitorId);
 
             if (visitor == null)
             {
-                visitor = new Visitor
-                {
-                    FullName = model.VisitorFullName,
-                    Phone = model.VisitorPhone
-                };
-                _visitorService.Add(visitor);
-                visitPass.VisitorId = visitor.VisitorId;
-            }
-            else
-            {
-                visitor.FullName = model.VisitorFullName;
-                visitor.Phone = model.VisitorPhone;
-                _visitorService.Update(visitor);
+                ModelState.AddModelError(nameof(model.VisitorId), "Select a valid visitor.");
+                PopulateVisitors(model.VisitorId);
+                return View(model);
             }
 
+            visitPass.VisitorId = visitor.VisitorId;
             visitPass.CodeHash = model.CodeHash;
             visitPass.CreatedByUserId = string.IsNullOrWhiteSpace(CurrentUserId) ? model.CreatedByUserId : CurrentUserId;
             if (string.Equals(model.Status, PassStatuses.Revoked, StringComparison.Ordinal))

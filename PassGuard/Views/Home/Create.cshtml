@@ -29,13 +29,10 @@
     <h4>Visitor Info</h4>
 
     <div class="mb-3">
-        <label asp-for="VisitorFullName" class="form-label">Visitor Name</label>
-        <input asp-for="VisitorFullName" class="form-control" />
-    </div>
-
-    <div class="mb-3">
-        <label asp-for="VisitorPhone" class="form-label">Visitor Phone</label>
-        <input asp-for="VisitorPhone" class="form-control" />
+        <label asp-for="VisitorId" class="form-label">Visitor</label>
+        <select asp-for="VisitorId" asp-items="ViewBag.Visitors" class="form-control">
+            <option value="">Select visitor</option>
+        </select>
     </div>
 
     <button type="submit" class="btn btn-success">Save</button>

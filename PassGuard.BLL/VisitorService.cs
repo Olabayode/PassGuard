@@ -22,6 +22,11 @@ namespace PassGuard.BLL
             return _repo.GetByFullNameAndPhone(fullName, phone);
         }
 
+        public List<Visitor> GetAll()
+        {
+            return _repo.GetAll();
+        }
+
         public void Add(Visitor visitor)
         {
             _repo.Add(visitor);
@@ -30,6 +35,11 @@ namespace PassGuard.BLL
         public void Update(Visitor visitor)
         {
             _repo.Update(visitor);
+        }
+
+        public void Delete(int id)
+        {
+            _repo.Delete(id);
         }
     }
 }

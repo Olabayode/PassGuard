@@ -1,87 +1,122 @@
 @model PassGuard.Models.ViewModels.HomeOwnerDashboardViewModel
 
 @{
-    ViewData["Title"] = "My Passes";
+    ViewData["Title"] = "My Estate Passes";
 }
 
-<h2>HomeOwner Dashboard</h2>
+<section class="dashboard-shell">
+    <div class="dashboard-hero">
+        <span class="dashboard-kicker">Homeowner View</span>
+        <h2>Resident Visitor Overview</h2>
+        <p>Monitor active guest access, recent arrivals, and past entries for your assigned home.</p>
+    </div>
 
-<p>
-    Active Passes: @Model.ActivePassCount |
-    Past Passes: @Model.PastPassCount |
-    Revoked Passes: @Model.RevokedPassCount
-</p>
+    <div class="stats-grid">
+        <div class="stat-card">
+            <span class="stat-label">Active Passes</span>
+            <div class="stat-value">@Model.ActivePassCount</div>
+            <div class="stat-note">Guests expected soon</div>
+        </div>
+        <div class="stat-card">
+            <span class="stat-label">Past Passes</span>
+            <div class="stat-value">@Model.PastPassCount</div>
+            <div class="stat-note">Used or expired access records</div>
+        </div>
+        <div class="stat-card">
+            <span class="stat-label">Revoked</span>
+            <div class="stat-value">@Model.RevokedPassCount</div>
+            <div class="stat-note">Cancelled before entry</div>
+        </div>
+    </div>
 
-<hr />
-
-<h4>Active Passes</h4>
-
-@if (Model.ActivePasses.Any())
-{
-    <table class="table table-bordered">
-        <thead>
-            <tr>
-                <th>Visitor</th>
-                <th>Home</th>
-                <th>Expires</th>
-                <th>Status</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var pass in Model.ActivePasses)
+    <div class="dashboard-grid">
+        <section class="dashboard-panel dashboard-panel--wide">
+            <h3>Active Passes</h3>
+            @if (Model.ActivePasses.Any())
             {
-                <tr>
-                    <td>@pass.Visitor.FullName</td>
-                    <td>@pass.Home.Address</td>
-                    <td>@pass.ExpiresAt</td>
-                    <td>@pass.Status</td>
-                    <td>
-                        <a asp-controller="VisitPass" asp-action="Details" asp-route-id="@pass.VisitPassId">Details</a>
-                    </td>
-                </tr>
+                <table class="table estate-table">
+                    <thead>
+                        <tr>
+                            <th>Visitor</th>
+                            <th>Home</th>
+                            <th>Expires</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var pass in Model.ActivePasses)
+                        {
+                            <tr>
+                                <td>@pass.Visitor.FullName</td>
+                                <td>@pass.Home.Address</td>
+                                <td>@pass.ExpiresAt</td>
+                                <td><span class="status-pill status-pill--active">@pass.Status</span></td>
+                                <td>
+                                    <a asp-controller="VisitPass" asp-action="Details" asp-route-id="@pass.VisitPassId">Details</a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
             }
-        </tbody>
-    </table>
-}
-else
-{
-    <p>No active passes.</p>
-}
-
-<hr />
-
-<h4>Visit History</h4>
-
-@if (Model.VisitHistory.Any())
-{
-    <table class="table table-bordered">
-        <thead>
-            <tr>
-                <th>Visitor</th>
-                <th>Status</th>
-                <th>Created</th>
-                <th>Check-In Time</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var pass in Model.VisitHistory)
+            else
             {
-                <tr>
-                    <td>@pass.Visitor.FullName</td>
-                    <td>@pass.Status</td>
-                    <td>@pass.CreatedAt</td>
-                    <td>@(pass.GateCheckIn?.CheckInTime.ToString() ?? "No check-in")</td>
-                    <td>
-                        <a asp-controller="VisitPass" asp-action="Details" asp-route-id="@pass.VisitPassId">Details</a>
-                    </td>
-                </tr>
+                <p class="dashboard-empty">There are no active visitor passes right now.</p>
             }
-        </tbody>
-    </table>
-}
-else
-{
-    <p>No visit history yet.</p>
-}
+        </section>
+
+        <aside class="dashboard-panel dashboard-panel--narrow">
+            <h3>Resident Actions</h3>
+            <div class="quick-actions">
+                <a asp-controller="VisitPass" asp-action="Create" class="btn btn-primary">Create Pass</a>
+                <a asp-controller="VisitPass" asp-action="Index" class="btn btn-outline-success">View All Passes</a>
+            </div>
+            <div class="mini-metric">
+                <span>Recent Visitors</span>
+                <strong>@Model.VisitHistory.Count</strong>
+            </div>
+            <div class="mini-metric">
+                <span>Currently Open Access</span>
+                <strong>@Model.ActivePassCount</strong>
+            </div>
+        </aside>
+
+        <section class="dashboard-panel">
+            <h3>Recent Visitors</h3>
+            @if (Model.VisitHistory.Any())
+            {
+                <table class="table estate-table">
+                    <thead>
+                        <tr>
+                            <th>Visitor</th>
+                            <th>Status</th>
+                            <th>Created</th>
+                            <th>Check-In</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var pass in Model.VisitHistory)
+                        {
+                            var statusClass = pass.Status.ToLowerInvariant();
+                            <tr>
+                                <td>@pass.Visitor.FullName</td>
+                                <td><span class="status-pill status-pill--@statusClass">@pass.Status</span></td>
+                                <td>@pass.CreatedAt</td>
+                                <td>@(pass.GateCheckIn?.CheckInTime.ToString() ?? "No check-in")</td>
+                                <td>
+                                    <a asp-controller="VisitPass" asp-action="Details" asp-route-id="@pass.VisitPassId">Details</a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+            else
+            {
+                <p class="dashboard-empty">No visitor history has been logged yet.</p>
+            }
+        </section>
+    </div>
+</section>

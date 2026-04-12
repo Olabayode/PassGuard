@@ -1,0 +1,105 @@
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using PassGuard.BLL;
+using PassGuard.Models;
+using PassGuard.Models.ViewModels;
+
+namespace PassGuard.Controllers
+{
+    [Authorize(Roles = "Admin")]
+    public class VisitorController : Controller
+    {
+        private readonly VisitorService _visitorService;
+
+        public VisitorController(VisitorService visitorService)
+        {
+            _visitorService = visitorService;
+        }
+
+        public IActionResult Index()
+        {
+            return View(_visitorService.GetAll());
+        }
+
+        public IActionResult Create()
+        {
+            return View(new VisitorFormViewModel());
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult Create(VisitorFormViewModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return View(model);
+            }
+
+            _visitorService.Add(new Visitor
+            {
+                FullName = model.FullName,
+                Phone = model.Phone
+            });
+
+            return RedirectToAction(nameof(Index));
+        }
+
+        public IActionResult Edit(int id)
+        {
+            Visitor? visitor = _visitorService.GetById(id);
+
+            if (visitor == null)
+            {
+                return NotFound();
+            }
+
+            return View(new VisitorFormViewModel
+            {
+                VisitorId = visitor.VisitorId,
+                FullName = visitor.FullName,
+                Phone = visitor.Phone
+            });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult Edit(VisitorFormViewModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return View(model);
+            }
+
+            Visitor? visitor = _visitorService.GetById(model.VisitorId);
+
+            if (visitor == null)
+            {
+                return NotFound();
+            }
+
+            visitor.FullName = model.FullName;
+            visitor.Phone = model.Phone;
+            _visitorService.Update(visitor);
+
+            return RedirectToAction(nameof(Index));
+        }
+
+        public IActionResult Details(int id)
+        {
+            Visitor? visitor = _visitorService.GetById(id);
+
+            if (visitor == null)
+            {
+                return NotFound();
+            }
+
+            return View(visitor);
+        }
+
+        public IActionResult Delete(int id)
+        {
+            _visitorService.Delete(id);
+            return RedirectToAction(nameof(Index));
+        }
+    }
+}
