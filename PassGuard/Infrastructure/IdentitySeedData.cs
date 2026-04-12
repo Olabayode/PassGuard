@@ -38,7 +38,8 @@ namespace PassGuard.Infrastructure
                         UserName = email,
                         Email = email,
                         FullName = fullName,
-                        EmailConfirmed = true
+                        EmailConfirmed = true,
+                        MustChangePassword = role != "Admin"
                     };
 
                     IdentityResult createResult = await userManager.CreateAsync(user, password);
@@ -53,6 +54,14 @@ namespace PassGuard.Infrastructure
                 if (!await userManager.IsInRoleAsync(user, role))
                 {
                     await userManager.AddToRoleAsync(user, role);
+                }
+
+                bool shouldForcePasswordChange = role != "Admin";
+
+                if (user.MustChangePassword != shouldForcePasswordChange)
+                {
+                    user.MustChangePassword = shouldForcePasswordChange;
+                    await userManager.UpdateAsync(user);
                 }
             }
         }

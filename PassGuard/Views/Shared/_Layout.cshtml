@@ -94,6 +94,8 @@
                                 <span class="text-muted small">@User.Identity.Name</span>
                             </div>
 
+                            <a class="btn btn-outline-success btn-sm" asp-controller="Account" asp-action="ChangePassword">Change Password</a>
+
                             <form asp-controller="Account" asp-action="Logout" method="post" class="mb-0">
                                 <button type="submit" class="btn btn-outline-secondary btn-sm">Logout</button>
                             </form>

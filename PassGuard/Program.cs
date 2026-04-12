@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using PassGuard.BLL;
 using PassGuard.DAL;
 using PassGuard.Infrastructure;
+using System.Security.Claims;
 
 namespace PassGuard
 {
@@ -70,6 +71,38 @@ namespace PassGuard
             app.UseRouting();
 
             app.UseAuthentication();
+
+            app.Use(async (context, next) =>
+            {
+                if (context.User.Identity?.IsAuthenticated == true)
+                {
+                    string? path = context.Request.Path.Value;
+                    bool isPasswordChangePath = string.Equals(path, "/Account/ChangePassword", StringComparison.OrdinalIgnoreCase);
+                    bool isLogoutPath = string.Equals(path, "/Account/Logout", StringComparison.OrdinalIgnoreCase);
+                    bool isAccessDeniedPath = string.Equals(path, "/Account/AccessDenied", StringComparison.OrdinalIgnoreCase);
+
+                    if (!isPasswordChangePath && !isLogoutPath && !isAccessDeniedPath)
+                    {
+                        string? userId = context.User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+                        if (!string.IsNullOrWhiteSpace(userId))
+                        {
+                            using IServiceScope scope = app.Services.CreateScope();
+                            UserManager<ApplicationUser> userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+                            ApplicationUser? user = await userManager.FindByIdAsync(userId);
+
+                            if (user?.MustChangePassword == true)
+                            {
+                                context.Response.Redirect("/Account/ChangePassword");
+                                return;
+                            }
+                        }
+                    }
+                }
+
+                await next();
+            });
+
             app.UseAuthorization();
 
             await IdentitySeedData.SeedAsync(app.Services);

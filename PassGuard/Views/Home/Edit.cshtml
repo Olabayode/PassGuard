@@ -30,18 +30,6 @@
         <span asp-validation-for="Address" class="text-danger"></span>
     </div>
 
-    <hr />
-
-    <h4>Default Visitor</h4>
-
-    <div class="mb-3">
-        <label asp-for="VisitorId" class="form-label"></label>
-        <select asp-for="VisitorId" asp-items="ViewBag.Visitors" class="form-control">
-            <option value="">Select visitor</option>
-        </select>
-        <span asp-validation-for="VisitorId" class="text-danger"></span>
-    </div>
-
     <button type="submit" class="btn btn-warning">Update</button>
 </form>
 

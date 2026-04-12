@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 using PassGuard.BLL;
 using PassGuard.DAL;
 using PassGuard.Models.ViewModels;
@@ -75,6 +76,12 @@ namespace PassGuard.Controllers
                 user.Email ?? "",
                 $"Successful login for {user.Email}.");
 
+            if (user.MustChangePassword)
+            {
+                TempData["InfoMessage"] = "You must change your temporary password before continuing.";
+                return RedirectToAction(nameof(ChangePassword));
+            }
+
             if (!string.IsNullOrWhiteSpace(returnUrl) && Url.IsLocalUrl(returnUrl))
             {
                 return Redirect(returnUrl);
@@ -90,6 +97,73 @@ namespace PassGuard.Controllers
         {
             await _signInManager.SignOutAsync();
             return RedirectToAction(nameof(Login));
+        }
+
+        [Authorize]
+        [HttpGet]
+        public async Task<IActionResult> ChangePassword()
+        {
+            ApplicationUser? user = await _userManager.GetUserAsync(User);
+
+            if (user == null)
+            {
+                return RedirectToAction(nameof(Login));
+            }
+
+            return View(new ChangePasswordViewModel
+            {
+                IsFirstLoginPasswordChange = user.MustChangePassword
+            });
+        }
+
+        [Authorize]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ChangePassword(ChangePasswordViewModel model)
+        {
+            ApplicationUser? user = await _userManager.GetUserAsync(User);
+
+            if (user == null)
+            {
+                return RedirectToAction(nameof(Login));
+            }
+
+            model.IsFirstLoginPasswordChange = user.MustChangePassword;
+
+            if (!ModelState.IsValid)
+            {
+                return View(model);
+            }
+
+            bool wasForcedPasswordChange = user.MustChangePassword;
+            IdentityResult result = await _userManager.ChangePasswordAsync(user, model.CurrentPassword, model.NewPassword);
+
+            if (!result.Succeeded)
+            {
+                foreach (IdentityError error in result.Errors)
+                {
+                    ModelState.AddModelError(string.Empty, error.Description);
+                }
+
+                return View(model);
+            }
+
+            user.MustChangePassword = false;
+            await _userManager.UpdateAsync(user);
+            await _signInManager.RefreshSignInAsync(user);
+
+            _auditLogService.Log(
+                "Password Changed",
+                "ApplicationUser",
+                user.Id,
+                user.Id,
+                user.Email ?? "",
+                wasForcedPasswordChange
+                    ? $"Completed forced password change for {user.Email}."
+                    : $"Changed password for {user.Email}.");
+
+            TempData["SuccessMessage"] = "Password changed successfully.";
+            return RedirectToAction("Index", "VisitPass");
         }
 
         [HttpGet]

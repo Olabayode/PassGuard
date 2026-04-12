@@ -19,9 +19,5 @@ namespace PassGuard.Models.ViewModels
         [StringLength(200)]
         [Display(Name = "Home Address")]
         public string Address { get; set; } = "";
-
-        [Required]
-        [Display(Name = "Default Visitor")]
-        public int? VisitorId { get; set; }
     }
 }

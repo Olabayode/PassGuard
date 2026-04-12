@@ -6,6 +6,20 @@
 
 <h2>User Management</h2>
 
+@if (TempData["SuccessMessage"] is string successMessage)
+{
+    <div class="alert alert-success">@successMessage</div>
+}
+
+@if (TempData["ErrorMessage"] is string errorMessage)
+{
+    <div class="alert alert-warning">@errorMessage</div>
+}
+
+<p>
+    <a asp-action="Create" class="btn btn-primary">Create User</a>
+</p>
+
 <table class="table table-bordered">
     <thead>
         <tr>
