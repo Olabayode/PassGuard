@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("PassGuard.BLL")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+498829d9303dac37d315b6b49925ae4275ba7fac")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+d7cb82cc09181654b1f16f5069ee83a3750f44f8")]
 [assembly: System.Reflection.AssemblyProductAttribute("PassGuard.BLL")]
 [assembly: System.Reflection.AssemblyTitleAttribute("PassGuard.BLL")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

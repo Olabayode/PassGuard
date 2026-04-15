@@ -99,10 +99,13 @@
                                         <button type="submit" class="btn btn-link btn-sm p-0 align-baseline">Revoke</button>
                                     </form>
                                 }
-                                <text> | </text>
-                                <form asp-action="Delete" asp-route-id="@item.VisitPassId" method="post" class="d-inline">
-                                    <button type="submit" class="btn btn-link btn-sm p-0 align-baseline">Delete</button>
-                                </form>
+                                @if (item.Status != PassStatuses.Used && !string.Equals(gateResult, "Approved", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    <text> | </text>
+                                    <form asp-action="Delete" asp-route-id="@item.VisitPassId" method="post" class="d-inline">
+                                        <button type="submit" class="btn btn-link btn-sm p-0 align-baseline">Delete</button>
+                                    </form>
+                                }
                             }
                         </td>
                     </tr>

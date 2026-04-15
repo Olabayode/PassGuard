@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 using PassGuard.BLL;
 using PassGuard.Models;
 using PassGuard.Models.ViewModels;
@@ -10,6 +11,7 @@ namespace PassGuard.Controllers
     public class VisitorController : Controller
     {
         private readonly VisitorService _visitorService;
+        private string CurrentUserId => User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "";
 
         public VisitorController(VisitorService visitorService)
         {
@@ -40,8 +42,13 @@ namespace PassGuard.Controllers
 
             model.FullName = model.FullName.Trim();
             model.Phone = model.Phone.Trim();
+            string createdByUserId = CurrentUserId;
 
-            if (_visitorService.ExistsByFullNameAndPhone(model.FullName, model.Phone))
+            bool visitorExists = User.IsInRole("HomeOwner")
+                ? _visitorService.ExistsByFullNameAndPhoneForCreator(model.FullName, model.Phone, createdByUserId)
+                : _visitorService.ExistsByFullNameAndPhone(model.FullName, model.Phone);
+
+            if (visitorExists)
             {
                 ModelState.AddModelError(string.Empty, "This visitor already exists.");
                 return View(model);
@@ -50,7 +57,8 @@ namespace PassGuard.Controllers
             _visitorService.Add(new Visitor
             {
                 FullName = model.FullName,
-                Phone = model.Phone
+                Phone = model.Phone,
+                CreatedByUserId = createdByUserId
             });
 
             TempData["SuccessMessage"] = "Visitor created successfully.";

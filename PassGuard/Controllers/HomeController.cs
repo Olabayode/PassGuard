@@ -14,15 +14,18 @@ namespace PassGuard.Controllers
     {
         private readonly HomeService _homeService;
         private readonly EstateService _estateService;
+        private readonly VisitPassService _visitPassService;
         private readonly UserManager<ApplicationUser> _userManager;
 
         public HomeController(
             HomeService homeService,
             EstateService estateService,
+            VisitPassService visitPassService,
             UserManager<ApplicationUser> userManager)
         {
             _homeService = homeService;
             _estateService = estateService;
+            _visitPassService = visitPassService;
             _userManager = userManager;
         }
 
@@ -45,6 +48,19 @@ namespace PassGuard.Controllers
             }
 
             ViewBag.HomeOwnerUsers = items;
+        }
+
+        private void PopulateEstates(string? selectedEstateName = null)
+        {
+            ViewBag.Estates = _estateService.GetAll()
+                .OrderBy(e => e.EstateName)
+                .Select(e => new SelectListItem
+                {
+                    Value = e.EstateName,
+                    Text = e.EstateName,
+                    Selected = string.Equals(e.EstateName, selectedEstateName, StringComparison.Ordinal)
+                })
+                .ToList();
         }
 
         private async Task<bool> IsValidHomeOwnerUserAsync(string ownerUserId)
@@ -85,6 +101,7 @@ namespace PassGuard.Controllers
         public async Task<IActionResult> Create()
         {
             await PopulateHomeOwnerUsersAsync();
+            PopulateEstates();
             return View();
         }
 
@@ -95,6 +112,7 @@ namespace PassGuard.Controllers
             if (!ModelState.IsValid)
             {
                 await PopulateHomeOwnerUsersAsync(model.OwnerUserId);
+                PopulateEstates(model.EstateName);
                 return View(model);
             }
             model.EstateName = model.EstateName.Trim();
@@ -106,6 +124,11 @@ namespace PassGuard.Controllers
             }
 
             Estate? estate = _estateService.GetByName(model.EstateName);
+
+            if (estate == null)
+            {
+                ModelState.AddModelError(nameof(model.EstateName), "Select an estate from the list.");
+            }
 
             if (estate != null && _homeService.ExistsByAddressAndEstateId(model.Address, estate.EstateId))
             {
@@ -120,16 +143,8 @@ namespace PassGuard.Controllers
             if (!ModelState.IsValid)
             {
                 await PopulateHomeOwnerUsersAsync(model.OwnerUserId);
+                PopulateEstates(model.EstateName);
                 return View(model);
-            }
-
-            if (estate == null)
-            {
-                estate = new Estate
-                {
-                    EstateName = model.EstateName
-                };
-                _estateService.Add(estate);
             }
 
             Home home = new Home
@@ -162,6 +177,7 @@ namespace PassGuard.Controllers
             };
 
             await PopulateHomeOwnerUsersAsync(model.OwnerUserId);
+            PopulateEstates(model.EstateName);
 
             return View(model);
         }
@@ -173,6 +189,7 @@ namespace PassGuard.Controllers
             if (!ModelState.IsValid)
             {
                 await PopulateHomeOwnerUsersAsync(model.OwnerUserId);
+                PopulateEstates(model.EstateName);
                 return View(model);
             }
             model.EstateName = model.EstateName.Trim();
@@ -197,6 +214,11 @@ namespace PassGuard.Controllers
 
             Estate? estate = _estateService.GetByName(model.EstateName);
 
+            if (estate == null)
+            {
+                ModelState.AddModelError(nameof(model.EstateName), "Select an estate from the list.");
+            }
+
             if (estate != null && _homeService.ExistsByAddressAndEstateId(model.Address, estate.EstateId, model.HomeId))
             {
                 ModelState.AddModelError(nameof(model.Address), "A home with this address already exists in the selected estate.");
@@ -205,16 +227,8 @@ namespace PassGuard.Controllers
             if (!ModelState.IsValid)
             {
                 await PopulateHomeOwnerUsersAsync(model.OwnerUserId);
+                PopulateEstates(model.EstateName);
                 return View(model);
-            }
-
-            if (estate == null)
-            {
-                estate = new Estate
-                {
-                    EstateName = model.EstateName
-                };
-                _estateService.Add(estate);
             }
 
             home.OwnerUserId = model.OwnerUserId;
@@ -254,9 +268,33 @@ namespace PassGuard.Controllers
             return homeOwnerNames;
         }
 
+        public async Task<IActionResult> Delete(int id, bool visitPassesRemoved = false)
+        {
+            Home? home = _homeService.GetFullDetails(id);
+
+            if (home == null)
+            {
+                return NotFound();
+            }
+
+            ApplicationUser? homeOwnerUser = await _userManager.FindByIdAsync(home.OwnerUserId);
+
+            HomeDeleteViewModel model = new HomeDeleteViewModel
+            {
+                HomeId = home.HomeId,
+                EstateName = home.Estate.EstateName,
+                Address = home.Address,
+                HomeOwnerName = homeOwnerUser?.FullName ?? homeOwnerUser?.Email ?? home.OwnerUserId,
+                VisitPassCount = home.VisitPasses.Count,
+                VisitPassesRemoved = visitPassesRemoved
+            };
+
+            return View(model);
+        }
+
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Delete(int id)
+        public IActionResult DeleteVisitPasses(int id)
         {
             Home? home = _homeService.GetFullDetails(id);
 
@@ -267,12 +305,33 @@ namespace PassGuard.Controllers
 
             if (home.VisitPasses.Any())
             {
-                TempData["ErrorMessage"] = "You cannot delete a home that already has visit pass history.";
-                return RedirectToAction(nameof(Index));
+                _visitPassService.DeleteByHomeId(id);
+            }
+
+            TempData["SuccessMessage"] = "Attached visit passes were deleted. Confirm the home deletion to finish.";
+            return RedirectToAction(nameof(Delete), new { id, visitPassesRemoved = true });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult ConfirmDelete(int id)
+        {
+            Home? home = _homeService.GetFullDetails(id);
+
+            if (home == null)
+            {
+                return NotFound();
+            }
+
+            if (home.VisitPasses.Any())
+            {
+                TempData["ErrorMessage"] = "Delete the attached visit passes before deleting this home.";
+                return RedirectToAction(nameof(Delete), new { id });
             }
 
             _homeService.Delete(id);
-            return RedirectToAction("Index");
+            TempData["SuccessMessage"] = "Home deleted successfully.";
+            return RedirectToAction(nameof(Index));
         }
     }
 }

@@ -29,10 +29,26 @@ namespace PassGuard.DAL
             return _context.Visitors.FirstOrDefault(v => v.FullName == normalizedFullName && v.Phone == normalizedPhone);
         }
 
+        public Visitor? GetByIdForCreator(int id, string createdByUserId)
+        {
+            return _context.Visitors
+                .Include(v => v.VisitPasses)
+                .FirstOrDefault(v => v.VisitorId == id && v.CreatedByUserId == createdByUserId);
+        }
+
         public List<Visitor> GetAll()
         {
             return _context.Visitors
                 .Include(v => v.VisitPasses)
+                .OrderBy(v => v.FullName)
+                .ToList();
+        }
+
+        public List<Visitor> GetByCreatedByUserId(string createdByUserId)
+        {
+            return _context.Visitors
+                .Include(v => v.VisitPasses)
+                .Where(v => v.CreatedByUserId == createdByUserId)
                 .OrderBy(v => v.FullName)
                 .ToList();
         }
@@ -66,6 +82,18 @@ namespace PassGuard.DAL
             string normalizedPhone = phone.Trim();
 
             return _context.Visitors.Any(v =>
+                v.FullName == normalizedFullName &&
+                v.Phone == normalizedPhone &&
+                (!ignoreVisitorId.HasValue || v.VisitorId != ignoreVisitorId.Value));
+        }
+
+        public bool ExistsByFullNameAndPhoneForCreator(string fullName, string phone, string createdByUserId, int? ignoreVisitorId = null)
+        {
+            string normalizedFullName = fullName.Trim();
+            string normalizedPhone = phone.Trim();
+
+            return _context.Visitors.Any(v =>
+                v.CreatedByUserId == createdByUserId &&
                 v.FullName == normalizedFullName &&
                 v.Phone == normalizedPhone &&
                 (!ignoreVisitorId.HasValue || v.VisitorId != ignoreVisitorId.Value));

@@ -78,9 +78,7 @@
                             <a asp-action="Edit" asp-route-id="@item.HomeId">Edit</a> |
                             <a asp-action="Details" asp-route-id="@item.HomeId">Details</a> |
                             <a asp-controller="Estate" asp-action="Details" asp-route-id="@item.EstateId">Estate View</a> |
-                            <form asp-action="Delete" asp-route-id="@item.HomeId" method="post" class="d-inline">
-                                <button type="submit" class="btn btn-link btn-sm p-0 align-baseline">Delete</button>
-                            </form>
+                            <a asp-action="Delete" asp-route-id="@item.HomeId">Delete</a>
                         </td>
                     </tr>
                 }

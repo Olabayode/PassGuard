@@ -22,9 +22,19 @@ namespace PassGuard.BLL
             return _repo.GetByFullNameAndPhone(fullName, phone);
         }
 
+        public Visitor? GetByIdForCreator(int id, string createdByUserId)
+        {
+            return _repo.GetByIdForCreator(id, createdByUserId);
+        }
+
         public List<Visitor> GetAll()
         {
             return _repo.GetAll();
+        }
+
+        public List<Visitor> GetByCreatedByUserId(string createdByUserId)
+        {
+            return _repo.GetByCreatedByUserId(createdByUserId);
         }
 
         public void Add(Visitor visitor)
@@ -45,6 +55,11 @@ namespace PassGuard.BLL
         public bool ExistsByFullNameAndPhone(string fullName, string phone, int? ignoreVisitorId = null)
         {
             return _repo.ExistsByFullNameAndPhone(fullName, phone, ignoreVisitorId);
+        }
+
+        public bool ExistsByFullNameAndPhoneForCreator(string fullName, string phone, string createdByUserId, int? ignoreVisitorId = null)
+        {
+            return _repo.ExistsByFullNameAndPhoneForCreator(fullName, phone, createdByUserId, ignoreVisitorId);
         }
     }
 }

@@ -11,7 +11,9 @@
 
     <div class="mb-3">
         <label asp-for="EstateName" class="form-label"></label>
-        <input asp-for="EstateName" class="form-control" />
+        <select asp-for="EstateName" asp-items="ViewBag.Estates" class="form-control">
+            <option value="">Select estate</option>
+        </select>
         <span asp-validation-for="EstateName" class="text-danger"></span>
     </div>
 

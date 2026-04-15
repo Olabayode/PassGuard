@@ -43,7 +43,11 @@ namespace PassGuard.Controllers
 
         private void PopulateVisitors(int? selectedVisitorId = null)
         {
-            ViewBag.Visitors = _visitorService.GetAll()
+            List<Visitor> visitors = User.IsInRole("HomeOwner")
+                ? _visitorService.GetByCreatedByUserId(CurrentUserId)
+                : _visitorService.GetAll();
+
+            ViewBag.Visitors = visitors
                 .Select(v => new SelectListItem
                 {
                     Value = v.VisitorId.ToString(),
@@ -93,6 +97,12 @@ namespace PassGuard.Controllers
         }
 
         private static bool IsSecurityApprovedPass(VisitPass visitPass)
+        {
+            return string.Equals(visitPass.Status, PassStatuses.Used, StringComparison.Ordinal) ||
+                string.Equals(visitPass.GateCheckIn?.Result, "Approved", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static bool IsUsedPass(VisitPass visitPass)
         {
             return string.Equals(visitPass.Status, PassStatuses.Used, StringComparison.Ordinal) ||
                 string.Equals(visitPass.GateCheckIn?.Result, "Approved", StringComparison.OrdinalIgnoreCase);
@@ -202,7 +212,9 @@ namespace PassGuard.Controllers
 
             }
 
-            Visitor? visitor = _visitorService.GetById(model.VisitorId);
+            Visitor? visitor = User.IsInRole("HomeOwner")
+                ? _visitorService.GetByIdForCreator(model.VisitorId, CurrentUserId)
+                : _visitorService.GetById(model.VisitorId);
 
             if (visitor == null)
             {
@@ -436,7 +448,9 @@ namespace PassGuard.Controllers
                 home.EstateId = estate.EstateId;
             }
 
-            Visitor? visitor = _visitorService.GetById(model.VisitorId);
+            Visitor? visitor = User.IsInRole("HomeOwner")
+                ? _visitorService.GetByIdForCreator(model.VisitorId, CurrentUserId)
+                : _visitorService.GetById(model.VisitorId);
 
             if (visitor == null)
             {
@@ -667,6 +681,12 @@ namespace PassGuard.Controllers
             if (User.IsInRole("HomeOwner") && visitPass.CreatedByUserId != CurrentUserId)
             {
                 return Forbid();
+            }
+
+            if (IsUsedPass(visitPass))
+            {
+                TempData["ErrorMessage"] = "Used visit passes cannot be deleted.";
+                return RedirectToAction(nameof(Index));
             }
 
             _visitPassService.Delete(id);

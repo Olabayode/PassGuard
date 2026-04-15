@@ -15,6 +15,10 @@ namespace PassGuard.Models
         [Phone]
         public string Phone { get; set; } = "";
 
+        [Required]
+        [StringLength(450)]
+        public string CreatedByUserId { get; set; } = "";
+
         public List<VisitPass> VisitPasses { get; set; } = new List<VisitPass>();
     }
 }

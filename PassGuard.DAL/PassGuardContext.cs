@@ -75,7 +75,12 @@ namespace PassGuard.DAL
                 .HasMaxLength(30);
 
             modelBuilder.Entity<Visitor>()
-                .HasIndex(v => new { v.FullName, v.Phone })
+                .Property(v => v.CreatedByUserId)
+                .IsRequired()
+                .HasMaxLength(450);
+
+            modelBuilder.Entity<Visitor>()
+                .HasIndex(v => new { v.CreatedByUserId, v.FullName, v.Phone })
                 .IsUnique();
 
             modelBuilder.Entity<VisitPass>()

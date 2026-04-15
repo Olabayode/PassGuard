@@ -66,6 +66,11 @@ namespace PassGuard.BLL
             _repo.Delete(id);
         }
 
+        public void DeleteByHomeId(int homeId)
+        {
+            _repo.DeleteByHomeId(homeId);
+        }
+
         public string GeneratePlainCode()
         {
             return _passCodeService.GeneratePlainCode();

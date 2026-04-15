@@ -30,7 +30,7 @@ namespace PassGuard.Controllers
         {
             if (User.Identity?.IsAuthenticated == true)
             {
-                return RedirectToAction("Index", "VisitPass");
+                return RedirectToRoleHome();
             }
 
             ViewData["ReturnUrl"] = returnUrl;
@@ -87,7 +87,7 @@ namespace PassGuard.Controllers
                 return Redirect(returnUrl);
             }
 
-            return RedirectToAction("Index", "VisitPass");
+            return RedirectToRoleHome();
         }
 
         [Authorize]
@@ -163,13 +163,33 @@ namespace PassGuard.Controllers
                     : $"Changed password for {user.Email}.");
 
             TempData["SuccessMessage"] = "Password changed successfully.";
-            return RedirectToAction("Index", "VisitPass");
+            return RedirectToRoleHome();
         }
 
         [HttpGet]
         public IActionResult AccessDenied()
         {
             return View();
+        }
+
+        private IActionResult RedirectToRoleHome()
+        {
+            if (User.IsInRole("Admin"))
+            {
+                return RedirectToAction("Index", "Dashboard");
+            }
+
+            if (User.IsInRole("HomeOwner"))
+            {
+                return RedirectToAction("Dashboard", "HomeOwner");
+            }
+
+            if (User.IsInRole("Security"))
+            {
+                return RedirectToAction("Panel", "Security");
+            }
+
+            return RedirectToAction("Index", "VisitPass");
         }
     }
 }

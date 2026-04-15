@@ -78,6 +78,19 @@ namespace PassGuard.DAL
             }
         }
 
+        public void DeleteByHomeId(int homeId)
+        {
+            List<VisitPass> visitPasses = _context.VisitPasses
+                .Where(v => v.HomeId == homeId)
+                .ToList();
+
+            if (visitPasses.Any())
+            {
+                _context.VisitPasses.RemoveRange(visitPasses);
+                _context.SaveChanges();
+            }
+        }
+
         public int CountDistinctVisitors()
         {
             return _context.VisitPasses
