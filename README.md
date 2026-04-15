@@ -168,12 +168,6 @@ dotnet ef migrations add MigrationName --project PassGuard.DAL --startup-project
 dotnet ef database update --project PassGuard.DAL --startup-project PassGuard
 ```
 
-Example:
-
-
-## Default Role Landing Pages
-
-
 ## Suggested Demo Flow
 
 1. Log in as `Admin`
