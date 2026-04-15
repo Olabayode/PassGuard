@@ -121,7 +121,10 @@ namespace PassGuard.BLL
                     .OrderBy(v => v.ExpiresAt)
                     .ToList(),
                 VisitHistory = visitPasses
-                    .Where(v => v.GateCheckIn != null || v.Status != PassStatuses.Active)
+                    .Where(v =>
+                        v.GateCheckIn != null ||
+                        v.Status == PassStatuses.Used ||
+                        v.Status == PassStatuses.Expired)
                     .OrderByDescending(v => v.GateCheckIn?.CheckInTime ?? v.CreatedAt)
                     .ToList()
             };

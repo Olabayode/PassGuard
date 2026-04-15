@@ -6,16 +6,15 @@
 
 <section class="dashboard-shell">
     <div class="dashboard-hero">
-        <span class="dashboard-kicker">Gate Operations</span>
         <h2>Security Gate Panel</h2>
-        <p>Verify incoming guests quickly, monitor upcoming visits for @Model.PanelDate.ToString("MMMM d"), and review the latest gate movements across the estate.</p>
+        <p>Verify incoming visitors, monitor upcoming visits for @Model.PanelDate.ToString("MMMM d").</p>
     </div>
 
     <div class="stats-grid">
         <div class="stat-card">
             <span class="stat-label">Upcoming Today</span>
             <div class="stat-value">@Model.ExpectedVisitorCount</div>
-            <div class="stat-note">Active passes still valid for today's gate window</div>
+            <div class="stat-note">Active passes still valid for today</div>
         </div>
         <div class="stat-card">
             <span class="stat-label">Checked In</span>
@@ -41,8 +40,8 @@
 
     <div class="dashboard-grid">
         <aside class="dashboard-panel dashboard-panel--narrow">
-            <h3>Quick Verification</h3>
-            <p class="stat-note">Jump straight into code validation before opening the gate.</p>
+            <h3>Code Verification</h3>
+            <p class="stat-note">Validate before opening the gate.</p>
             <div class="quick-actions">
                 <a asp-controller="VisitPass" asp-action="Verify" class="btn btn-primary">Verify Pass Code</a>
                 <a asp-controller="VisitPass" asp-action="Index" class="btn btn-outline-success">Open Visit Passes</a>
